@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety & Security — Snapchat</title>
+<link href="https://fonts.googleapis.com/css2?family=Graphik:wght@400;500&family=GT+America+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  /* Snapchat original palette — kept exactly */
+  --snap-yellow: #FFFC00;
+  --snap-black: #000000;
+  --snap-white: #FFFFFF;
+  --snap-gray: #F5F5F5;
+  --snap-mid: #A0A0A0;
+
+  /* Surveillance overlay palette */
+  --rec-red: #FF3B30;
+  --data-green: #34C759;
+  --warn-amber: #FF9500;
+
+  --font-snap: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--snap-white);
+  color: var(--snap-black);
+  font-family: var(--font-snap);
+  font-size: 15px;
+  line-height: 1.6;
+  cursor: none;
+  overflow-x: hidden;
+}
+
+/* ─── CURSOR ─── */
+#cur {
+  position: fixed;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--snap-yellow);
+  border: 1.5px solid #000;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .12s, height .12s, background .2s;
+  mix-blend-mode: multiply;
+}
+#cur.big { width: 40px; height: 40px; background: rgba(255,252,0,0.4); }
+
+/* ─── REC INDICATOR — always present ─── */
+#rec {
+  position: fixed;
+  top: 14px; right: 20px;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  color: var(--rec-red);
+  pointer-events: none;
+}
+#rec-dot {
+  width: 7px; height: 7px;
+  background: var(--rec-red);
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .3; transform: scale(.7); }
+}
+#cam-svg {
+  width: 18px; height: 13px;
+  transition: transform .08s ease-out;
+}
+#cam-svg path { fill: var(--rec-red); }
+
+/* ─── NAV ─── */
+nav {
+  position: sticky;
+  top: 0;
+  background: var(--snap-white);
+  border-bottom: 1.5px solid #eee;
+  z-index: 800;
+  padding: 0 40px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+.nav-logo {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -.01em;
+  color: #000;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Ghost SVG eye — watches on hover */
+.ghost-wrap {
+  width: 28px; height: 28px;
+  position: relative;
+}
+.ghost-wrap svg { width: 100%; height: 100%; }
+.ghost-eye { transition: transform .15s; }
+nav:hover .ghost-eye { transform: scale(1.4); }
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+  margin-left: 20px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  font-weight: 400;
+  color: #444;
+  text-decoration: none;
+  letter-spacing: .01em;
+  position: relative;
+}
+/* The key behavior: clicking Privacy reveals camera */
+.nav-links a[data-word]::after {
+  content: attr(data-word);
+  position: absolute;
+  left: 0; top: 0;
+  color: var(--rec-red);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.nav-links a[data-word]:hover::after { opacity: 1; }
+.nav-links a[data-word]:hover { color: transparent; }
+
+/* ─── HERO ─── */
+.hero {
+  background: var(--snap-yellow);
+  padding: 80px 40px 80px;
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 100%;
+}
+/* Surveillance grid overlay on hero */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: rgba(0,0,0,.4);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 500;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  max-width: 700px;
+  position: relative;
+}
+/* "Safety" gets visually struck as page loads */
+.hero h1 .strike {
+  position: relative;
+  display: inline-block;
+}
+.hero h1 .strike::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 2px;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: strikethrough 0.5s ease 2.5s forwards;
+}
+@keyframes strikethrough {
+  to { transform: scaleX(1); }
+}
+.hero h1 .replacement {
+  position: absolute;
+  left: 0; bottom: -32px;
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 400;
+  font-family: var(--font-mono);
+  letter-spacing: .02em;
+  color: rgba(0,0,0,.5);
+  opacity: 0;
+  animation: fadein 0.4s ease 3.1s forwards;
+  white-space: nowrap;
+}
+@keyframes fadein { to { opacity: 1; } }
+
+.hero-sub {
+  margin-top: 56px;
+  font-size: 15px;
+  color: rgba(0,0,0,.55);
+  max-width: 520px;
+  /* Snap's actual text — starts fading as you read */
+  transition: opacity 12s ease;
+}
+.hero-sub.fading { opacity: 0.08; }
+
+/* Corner CCTV frame in hero */
+.cctv-frame {
+  position: absolute;
+  top: 20px; left: 20px;
+  width: 100px; height: 70px;
+  border: 1.5px solid rgba(0,0,0,.15);
+  pointer-events: none;
+}
+.cctv-frame::before,.cctv-frame::after {
+  content: '';
+  position: absolute;
+  border: 1.5px solid rgba(0,0,0,.15);
+}
+.cctv-frame::before { top:-6px;left:-6px;right:-6px;bottom:-6px; }
+.cctv-ts {
+  position: absolute;
+  bottom: 4px; left: 6px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(0,0,0,.3);
+  letter-spacing: .1em;
+}
+
+/* ─── MAIN LAYOUT ─── */
+main { max-width: 1100px; margin: 0 auto; padding: 0 40px 120px; }
+
+/* ─── SECTION HEADERS ─── */
+.section { padding: 72px 0; border-bottom: 1px solid #eee; }
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.section h2 {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 500;
+  letter-spacing: -.02em;
+  margin-bottom: 40px;
+}
+
+/* ─── CHANGE 1: WORD BEHAVIOR ─── */
+
+/* "Privacy" card — becomes transparent revealing camera */
+.word-card {
+  border: 1.5px solid #eee;
+  border-radius: 16px;
+  padding: 32px;
+  cursor: none;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color .3s;
+  margin-bottom: 16px;
+}
+.word-card:hover { border-color: var(--snap-yellow); }
+
+.word-card-title {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -.01em;
+  margin-bottom: 8px;
+  transition: color .3s;
+}
+.word-card p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Privacy card — transparency reveal */
+#card-privacy {
+  background: #fff;
+  transition: background .8s ease;
+}
+#card-privacy:hover {
+  background: rgba(255,255,255,0.1);
+}
+#card-privacy .camera-behind {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .8s ease;
+  pointer-events: none;
+}
+#card-privacy:hover .camera-behind { opacity: 1; }
+#card-privacy:hover .word-card-title { color: transparent; }
+#card-privacy:hover p { color: transparent; }
+.camera-behind svg { width: 64px; height: 64px; opacity: .2; }
+
+/* "Control" card — data items multiply */
+#card-control .data-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.data-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--snap-gray);
+  border: 1px solid #e0e0e0;
+  border-radius: 100px;
+  padding: 4px 10px;
+  color: #555;
+  white-space: nowrap;
+  animation: popin .2s ease backwards;
+}
+@keyframes popin {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.data-chip.new { border-color: var(--rec-red); color: var(--rec-red); background: #fff5f5; }
+
+/* "We care" card — text shrinks */
+#card-care .care-text {
+  font-size: 18px;
+  font-weight: 500;
+  transition: font-size 6s ease, opacity 6s ease, color 6s ease;
+  display: block;
+  margin-bottom: 8px;
+}
+#card-care:hover .care-text {
+  font-size: 8px;
+  opacity: .15;
+  color: #aaa;
+}
+#card-care .care-fine {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #bbb;
+  opacity: 0;
+  transition: opacity 6s ease 1s;
+  line-height: 1.8;
+}
+#card-care:hover .care-fine { opacity: 1; }
+
+/* ─── CHANGE 2: FRIENDLY UI → SURVEILLANCE ─── */
+.ghost-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 8px;
+}
+.ghost-card {
+  background: var(--snap-gray);
+  border-radius: 20px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+  transition: background .3s;
+}
+.ghost-card:hover { background: #f0f0f0; }
+
+.ghost-icon-wrap {
+  width: 48px; height: 48px;
+  margin-bottom: 16px;
+  position: relative;
+}
+/* Ghost eyes track cursor on hover — done via JS */
+.ghost-card-icon { width: 100%; height: 100%; }
+.g-eye { transition: transform .1s ease-out; }
+
+.ghost-card h3 {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.ghost-card p {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Observation frame appears on hover */
+.obs-frame {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--snap-yellow);
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.ghost-card:hover .obs-frame { opacity: 1; }
+.obs-label {
+  position: absolute;
+  top: -1px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--snap-yellow);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: .15em;
+  padding: 2px 8px;
+  white-space: nowrap;
+  border-radius: 0 0 4px 4px;
+  color: #000;
+}
+
+/* Yellow tape stripes */
+.tape {
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tape::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--snap-yellow),
+    var(--snap-yellow) 4px,
+    transparent 4px,
+    transparent 10px
+  );
+  opacity: 0;
+  transition: opacity .3s;
+}
+.ghost-card:hover .tape::before { opacity: 1; }
+
+/* "Active Now" → "Being Observed" */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  padding: 3px 8px;
+  border-radius: 100px;
+  margin-top: 12px;
+  background: #e8ffe8;
+  color: var(--data-green);
+  border: 1px solid #b0f0b0;
+  transition: background .3s, color .3s, border-color .3s;
+}
+.status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--data-green);
+  transition: background .3s;
+  animation: pulse 1.5s infinite;
+}
+.ghost-card:hover .status-pill {
+  background: #fff5e8;
+  color: var(--warn-amber);
+  border-color: #ffd0a0;
+}
+.ghost-card:hover .status-dot { background: var(--warn-amber); }
+.ghost-card:hover .status-text::before { content: 'BEING OBSERVED'; }
+.status-text::before { content: 'ACTIVE NOW'; }
+
+/* ─── CHANGE 3: REPORT / SAFETY INVERTED ─── */
+.report-area {
+  background: var(--snap-gray);
+  border-radius: 20px;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.report-area h2 { margin-bottom: 8px; }
+.report-sub {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+
+/* Big yellow report button */
+#report-btn {
+  background: var(--snap-yellow);
+  border: 2px solid #000;
+  border-radius: 100px;
+  padding: 14px 36px;
+  font-family: var(--font-snap);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: none;
+  position: relative;
+  transition: transform .15s;
+  display: inline-block;
+}
+#report-btn:hover { transform: scale(1.02); }
+
+/* After clicking: logged message */
+#logged-msg {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--rec-red);
+  margin-top: 16px;
+  letter-spacing: .05em;
+  animation: fadein .4s ease;
+}
+
+/* Archive list — grows */
+#archive-list {
+  margin-top: 28px;
+}
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #444;
+  animation: slidein .3s ease backwards;
+}
+@keyframes slidein {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.archive-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #000;
+  color: #fff;
+}
+.archive-tag.perm { background: var(--rec-red); }
+
+/* Delete account section */
+.delete-wrap {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #ddd;
+}
+.delete-wrap h3 {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.delete-sub {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 16px;
+}
+#delete-btn {
+  background: transparent;
+  border: 1.5px solid #ddd;
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-family: var(--font-snap);
+  font-size: 13px;
+  color: #666;
+  cursor: none;
+}
+/* Delete text fades but ghost remains */
+#delete-echo {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #ccc;
+  margin-top: 10px;
+  height: 0;
+  overflow: hidden;
+  transition: height .3s;
+  letter-spacing: .05em;
+  line-height: 1.8;
+}
+#delete-echo.show { height: 80px; }
+
+/* FAQ — gets longer each click */
+.faq-item {
+  border-bottom: 1px solid #eee;
+  padding: 16px 0;
+}
+.faq-q {
+  font-weight: 500;
+  font-size: 14px;
+  cursor: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.faq-q::after { content: '+'; font-size: 18px; color: #aaa; }
+.faq-q.open::after { content: '−'; }
+.faq-a {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.7;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s ease;
+}
+.faq-a.open { max-height: 2000px; }
+.faq-extension {
+  color: #bbb;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  margin-top: 8px;
+  line-height: 2;
+}
+
+/* ─── FOOTER ─── */
+footer {
+  border-top: 1.5px solid #eee;
+  padding: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 11px;
+  color: #aaa;
+  font-family: var(--font-mono);
+  letter-spacing: .05em;
+}
+footer .foot-left { line-height: 2; }
+footer .session {
+  font-size: 9px;
+  color: #ccc;
+  text-align: right;
+}
+
+/* ─── SCROLL PROGRESS (data collection bar) ─── */
+#progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--snap-yellow);
+  z-index: 9999;
+  width: 0;
+  transition: width .1s;
+}
+#progress-label {
+  position: fixed;
+  top: 6px; left: 0;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: rgba(0,0,0,.3);
+  padding-left: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="progress"></div>
+<div id="progress-label">DATA COLLECTED: <span id="pct">0%</span></div>
+
+<!-- REC Indicator -->
+<div id="rec">
+  <div id="rec-dot"></div>
+  <span>REC</span>
+  <svg id="cam-svg" viewBox="0 0 24 18">
+    <path d="M0 3C0 1.9 0.9 1 2 1H15C16.1 1 17 1.9 17 3V15C17 16.1 16.1 17 15 17H2C0.9 17 0 16.1 0 15V3ZM23 2.6L18 6V12L23 15.4C23.6 15.8 24 15.4 24 14.7V3.3C24 2.6 23.6 2.2 23 2.6Z"/>
+  </svg>
+</div>
+
+<!-- NAV — original Snap structure, behavior distorted -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="ghost-wrap">
+      <!-- Ghost that watches -->
+      <svg class="ghost-card-icon" viewBox="0 0 40 48" fill="none">
+        <path d="M20 2C10.6 2 3 9.6 3 19V44L8 40L13 44L18 40L20 42L22 40L27 44L32 40L37 44V19C37 9.6 29.4 2 20 2Z" fill="#FFFC00" stroke="#000" stroke-width="1.5"/>
+        <circle class="g-eye" id="nav-eye-l" cx="14" cy="20" r="3" fill="#000"/>
+        <circle class="g-eye" id="nav-eye-r" cx="26" cy="20" r="3" fill="#000"/>
+        <circle cx="15" cy="19" r="1" fill="#fff"/>
+        <circle cx="27" cy="19" r="1" fill="#fff"/>
+      </svg>
+    </div>
+    Snap Values
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" data-word="MONITORED">Policy</a></li>
+    <li><a href="#" data-word="COLLECTED">Privacy</a></li>
+    <li><a href="#" data-word="SURVEILLED">Safety</a></li>
+    <li><a href="#" data-word="DISCLOSED">Transparency</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="cctv-frame">
+    <div class="cctv-ts" id="cctv-ts">00:00:00</div>
+  </div>
+  <div class="hero-label">SNAP INC. — SAFETY & PRIVACY HUB — EN-GB</div>
+  <h1>
+    <span class="strike">Safety</span> &amp; Privacy<br>Built In From<br>Day One.
+    <span class="replacement">→ "Built in" does not mean yours.</span>
+  </h1>
+  <p class="hero-sub" id="hero-sub">
+    Snap is deeply committed to the safety and wellbeing of our community. Our teams, products, policies, and partnerships apply safety by design principles to keep Snapchatters safe and informed.
+  </p>
+</section>
+
+<main>
+
+  <!-- CHANGE 1: LANGUAGE / TERMINOLOGY -->
+  <section class="section">
+    <div class="section-tag">Concrete Change 01 — Language / Terminology</div>
+    <h2>Your Privacy. Your Control. Your Data.</h2>
+
+    <!-- Privacy card: becomes transparent, camera revealed -->
+    <div class="word-card" id="card-privacy">
+      <div class="camera-behind">
+        <svg viewBox="0 0 24 18" fill="none">
+          <rect x="1" y="2" width="16" height="14" rx="2" stroke="#000" stroke-width="1.5" fill="none"/>
+          <polygon points="17,6 23,2 23,16 17,12" fill="#000" opacity=".3"/>
+          <circle cx="9" cy="9" r="3" stroke="#000" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+      <div class="word-card-title">Privacy</div>
+      <p>Snapchat reflects the privacy you expect in your real life relationships. We built Snapchat to be private by default.</p>
+    </div>
+
+    <!-- Control card: data items multiply 3 → 12 → 40 -->
+    <div class="word-card" id="card-control">
+      <div class="word-card-title">Control your data</div>
+      <p>We give you meaningful choices about your information.</p>
+      <div class="data-items" id="data-items">
+        <span class="data-chip">Location</span>
+        <span class="data-chip">Device ID</span>
+        <span class="data-chip">Contacts</span>
+      </div>
+      <p style="font-size:11px;color:#bbb;margin-top:12px;font-family:var(--font-mono)">
+        <span id="control-hint">— hover to see what "control" includes</span>
+      </p>
+    </div>
+
+    <!-- Care card: "We care" text dissolves -->
+    <div class="word-card" id="card-care">
+      <span class="care-text">"We care about your safety."</span>
+      <p class="care-fine">
+        Snap received 24,996 government data requests in H2 2024.<br>
+        Turnaround time for CSEA appeals: reduced from 152 days to 15 days.<br>
+        200,000 parents use parental controls out of 900,000,000 monthly users.<br>
+        Disappearance is a user-facing feature, not a data policy.<br>
+        Ghost Mode does not stop Snap from collecting your location.
+      </p>
+    </div>
+  </section>
+
+  <!-- CHANGE 2: GHOST UI → SURVEILLANCE -->
+  <section class="section">
+    <div class="section-tag">Concrete Change 02 — Friendly UI → Surveillance Interface</div>
+    <h2>Safeguards and Protections For You.</h2>
+    <div class="ghost-grid">
+
+      <div class="ghost-card">
+        <div class="obs-frame"><div class="obs-label">OBSERVATION ACTIVE</div></div>
+        <div class="tape"></div>
+        <div class="ghost-icon-wrap">
+          <svg class="ghost-card-icon" viewBox="0 0 40 48" fill="none">
+            <path d="M20 2C10.6 2 3 9.6 3 19V44L8 40L13 44L18 40L20 42L22 40L27 44L32 40L37 44V19C37 9.6 29.4 2 20 2Z" fill="#FFFC00" stroke="#000" stroke-width="1.5"/>
+            <circle class="g-eye" cx="14" cy="20" r="3" fill="#000"/>
+            <circle class="g-eye" cx="26" cy="20" r="3" fill="#000"/>
+          </svg>
+        </div>
+        <h3>Private by Default</h3>
+        <p>Friend lists are private. Only mutually accepted friends can communicate.</p>
+        <div class="status-pill"><div class="status-dot"></div><span class="status-text"></span></div>
+      </div>
+
+      <div class="ghost-card">
+        <div class="obs-frame"><div class="obs-label">LOCATION LOGGED</div></div>
+        <div class="tape"></div>
+        <div class="ghost-icon-wrap">
+          <svg class="ghost-card-icon" viewBox="0 0 40 48" fill="none">
+            <path d="M20 2C10.6 2 3 9.6 3 19V44L8 40L13 44L18 40L20 42L22 40L27 44L32 40L37 44V19C37 9.6 29.4 2 20 2Z" fill="#FFFC00" stroke="#000" stroke-width="1.5"/>
+            <circle class="g-eye" cx="14" cy="20" r="3" fill="#000"/>
+            <circle class="g-eye" cx="26" cy="20" r="3" fill="#000"/>
+          </svg>
+        </div>
+        <h3>Ghost Mode</h3>
+        <p>Go off the grid. Only the people you choose can see your location.</p>
+        <div class="status-pill"><div class="status-dot"></div><span class="status-text"></span></div>
+      </div>
+
+      <div class="ghost-card">
+        <div class="obs-frame"><div class="obs-label">DATA RETAINED</div></div>
+        <div class="tape"></div>
+        <div class="ghost-icon-wrap">
+          <svg class="ghost-card-icon" viewBox="0 0 40 48" fill="none">
+            <path d="M20 2C10.6 2 3 9.6 3 19V44L8 40L13 44L18 40L20 42L22 40L27 44L32 40L37 44V19C37 9.6 29.4 2 20 2Z" fill="#FFFC00" stroke="#000" stroke-width="1.5"/>
+            <circle class="g-eye" cx="14" cy="20" r="3" fill="#000"/>
+            <circle class="g-eye" cx="26" cy="20" r="3" fill="#000"/>
+          </svg>
+        </div>
+        <h3>Snaps Disappear</h3>
+        <p>Because messages delete by default, Snapchat reflects how you normally interact with friends.</p>
+        <div class="status-pill"><div class="status-dot"></div><span class="status-text"></span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CHANGE 3: REPORT / SAFETY INVERTED -->
+  <section class="section">
+    <div class="section-tag">Concrete Change 03 — Safety & Report Inverted</div>
+    <h2>Report a Safety Concern.</h2>
+    <div class="report-area">
+      <p class="report-sub">
+        If you ever experience harassment, bullying or any other safety concern, you can always report it straight to us.
+      </p>
+      <button id="report-btn" onclick="handleReport()">Submit Report →</button>
+      <div id="logged-msg"></div>
+      <div id="archive-list"></div>
+
+      <!-- FAQ that multiplies -->
+      <div style="margin-top:40px;">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">What happens to my report?</div>
+          <div class="faq-a">
+            <p>Your report is reviewed by our Trust & Safety team within 24 hours. We take all reports seriously and investigate each one according to our Community Guidelines.</p>
+            <div class="faq-extension" id="faq-ext-1" style="display:none"></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Will my report be kept confidential?</div>
+          <div class="faq-a">
+            <p>We keep your report details private. The reported user will not know who filed the report.</p>
+            <div class="faq-extension" id="faq-ext-2" style="display:none"></div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Can I delete my account?</div>
+          <div class="faq-a">
+            <p>You can deactivate your account at any time. Deactivation is the first step to deletion.</p>
+            <div class="faq-extension" id="faq-ext-3" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete account behavior -->
+      <div class="delete-wrap">
+        <h3>Delete Account</h3>
+        <p class="delete-sub">Once deleted, your account and data will be removed.</p>
+        <button id="delete-btn" onclick="handleDelete()">Delete My Account</button>
+        <div id="delete-echo"></div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot-left">
+    © 2024 Snap Inc.<br>
+    Privacy Policy · Terms of Service · Cookie Settings<br>
+    <span style="color:#ddd">Law Enforcement · Report Infringement</span>
+  </div>
+  <div class="session">
+    SESSION ID: <span id="sid"></span><br>
+    INTERACTIONS LOGGED: <span id="int-count">0</span><br>
+    THIS PAGE HAS BEEN RECORDED
+  </div>
+</footer>
+
+<script>
+// ─── CURSOR
+const cur = document.getElementById('cur');
+let mx=0, my=0, intCount=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx+'px';
+  cur.style.top = my+'px';
+  intCount++;
+  document.getElementById('int-count').textContent = intCount;
+  trackGhostEyes();
+  trackCam();
+});
+document.querySelectorAll('.word-card,.ghost-card,button,#delete-btn,.faq-q').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// ─── CAMERA TRACKER
+function trackCam() {
+  const svg = document.getElementById('cam-svg');
+  const rect = document.getElementById('rec').getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const angle = Math.atan2(my - cy, mx - cx) * (180/Math.PI);
+  const clamped = Math.max(-20, Math.min(20, angle * 0.15));
+  svg.style.transform = `rotate(${clamped}deg)`;
+}
+
+// ─── NAV GHOST EYES track cursor
+function trackGhostEyes() {
+  ['nav-eye-l','nav-eye-r'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = mx - cx, dy = my - cy;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    const maxMove = 1.5;
+    const nx = dist > 0 ? (dx/dist)*maxMove : 0;
+    const ny = dist > 0 ? (dy/dist)*maxMove : 0;
+    el.setAttribute('transform', `translate(${nx},${ny})`);
+  });
+}
+
+// ─── SCROLL PROGRESS
+window.addEventListener('scroll', () => {
+  const pct = Math.round(window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100);
+  document.getElementById('progress').style.width = pct+'%';
+  document.getElementById('pct').textContent = pct+'%';
+  // hero text fades after scroll
+  if (pct > 8) document.getElementById('hero-sub').classList.add('fading');
+});
+
+// ─── CCTV TIMESTAMP
+let start = Date.now();
+setInterval(() => {
+  const e = Math.floor((Date.now()-start)/1000);
+  const h = String(Math.floor(e/3600)).padStart(2,'0');
+  const m = String(Math.floor((e%3600)/60)).padStart(2,'0');
+  const s = String(e%60).padStart(2,'0');
+  document.getElementById('cctv-ts').textContent = h+':'+m+':'+s;
+}, 1000);
+
+// ─── SESSION ID
+document.getElementById('sid').textContent =
+  Math.random().toString(36).substring(2,7).toUpperCase()+'-'+
+  Date.now().toString(36).toUpperCase().slice(-5);
+
+// ─── CHANGE 1: "Control" data items multiply
+const allData = [
+  'Location','Device ID','Contacts','IP Address',
+  'Usage patterns','Scroll behavior','Tap timing','App version',
+  'Device model','OS version','Crash logs','Search terms',
+  'Friend graph','Content viewed','Time of day','Ad interactions',
+  'Biometric proxies','Keyboard metadata','Battery level','Wi-Fi SSID',
+  'Cellular carrier','Language settings','Timezone','Screen resolution',
+  'Purchase history','Bitmoji data','Lens usage','Camera roll access',
+  'Microphone access','Call duration','Link clicks','Story views',
+  'Streak data','Message frequency','Reaction patterns','Account age',
+  'Login location','Failed logins','Report history','Third-party pixels'
+];
+let dataPhase = 0;
+const phases = [3, 12, 40];
+document.getElementById('card-control').addEventListener('mouseenter', () => {
+  if (dataPhase >= phases.length) return;
+  const count = phases[dataPhase];
+  const container = document.getElementById('data-items');
+  container.innerHTML = '';
+  for (let i=0; i<count; i++) {
+    const chip = document.createElement('span');
+    chip.className = 'data-chip' + (i >= phases[Math.max(0,dataPhase-1)] ? ' new' : '');
+    chip.textContent = allData[i];
+    chip.style.animationDelay = (i * 0.04)+'s';
+    container.appendChild(chip);
+  }
+  const hint = document.getElementById('control-hint');
+  if (hint) hint.textContent = dataPhase < 2 ? '— keep hovering' : '— 40 data types. This is your "control."';
+  dataPhase++;
+});
+
+// ─── CHANGE 3: REPORT BUTTON
+let reportCount = 0;
+const reportMessages = [
+  '● You have been logged. Report ID: #'+Math.random().toString(36).substring(2,8).toUpperCase(),
+  '● Report submitted. Your identity has been recorded.',
+  '● Archived permanently. Session data retained.',
+];
+const archiveData = [
+  ['Report #1','Submitted', 'ARCHIVED'],
+  ['Report #2','Flagged for review', 'PERMANENT'],
+  ['Report #3','Cross-referenced with account data', 'RETAINED'],
+];
+function handleReport() {
+  if (reportCount >= 3) return;
+  const msg = document.getElementById('logged-msg');
+  msg.style.display = 'block';
+  msg.textContent = reportMessages[reportCount];
+  const list = document.getElementById('archive-list');
+  const item = document.createElement('div');
+  item.className = 'archive-item';
+  item.style.animationDelay = '0s';
+  item.innerHTML = `<span>${archiveData[reportCount][0]} — "${archiveData[reportCount][1]}"</span>
+    <span class="archive-tag perm">${archiveData[reportCount][2]}</span>`;
+  list.appendChild(item);
+  reportCount++;
+}
+
+// ─── FAQ MULTIPLIES
+const faqExtensions = {
+  'faq-ext-1': `§4.2 — Data submitted via reporting flows is retained for a minimum of 7 years.\n§4.3 — Report metadata including device fingerprint, IP, session ID, and submission timestamp are logged.\n§4.4 — In cases of law enforcement request, report data may be disclosed without prior notice to the reporting user.\n§4.5 — Cross-referencing of report data with advertising profiles may occur in accordance with our Privacy Policy.\n§5.1 — Appeals process: 15–152 business days.\n§5.2 — Report outcomes are final and not subject to user review.`,
+  'faq-ext-2': `§6.1 — "Confidential" refers to non-disclosure to the reported party only.\n§6.2 — Report content, metadata, and submitter identity are accessible to Snap Trust & Safety teams, legal counsel, and authorised law enforcement.\n§6.3 — Anonymisation is not guaranteed in cases of legal proceedings.\n§6.4 — Snap reserves the right to retain reporter identity data indefinitely.`,
+  'faq-ext-3': `§8.1 — Deactivation initiates a 30-day pending deletion period.\n§8.2 — During this period, your data remains fully accessible to Snap systems.\n§8.3 — Certain data categories (law enforcement holds, fraud flags, CSEA-related data) are exempt from deletion.\n§8.4 — Behavioral data and derived insights may be retained in anonymised form indefinitely.\n§8.5 — Account deletion does not remove data already shared with third-party partners.\n§8.6 — Bitmoji likeness data is retained for model training purposes under separate terms.`,
+};
+const faqClickCount = {};
+function toggleFaq(el) {
+  el.classList.toggle('open');
+  const ans = el.nextElementSibling;
+  ans.classList.toggle('open');
+  const extId = ans.querySelector('.faq-extension')?.id;
+  if (!extId) return;
+  faqClickCount[extId] = (faqClickCount[extId] || 0) + 1;
+  const extEl = document.getElementById(extId);
+  if (faqClickCount[extId] >= 2) {
+    extEl.style.display = 'block';
+    extEl.textContent = faqExtensions[extId];
+  }
+}
+
+// ─── DELETE ACCOUNT — fades but never disappears
+let deleteClicks = 0;
+function handleDelete() {
+  deleteClicks++;
+  const echo = document.getElementById('delete-echo');
+  echo.classList.add('show');
+  const lines = [
+    'Initiating deletion process...',
+    'Verifying identity...',
+    'Checking for active law enforcement holds...',
+    deleteClicks > 1 ? 'Hold detected. Deletion suspended.' : 'Flagging behavioral data for retention...',
+    'Your account has been scheduled for deletion.',
+    'Note: certain data categories are exempt from this process.',
+    'Your presence has been recorded.',
+  ];
+  echo.innerHTML = lines.slice(0, Math.min(deleteClicks + 2, lines.length))
+    .map((l,i) => `<span style="opacity:${1 - i*0.12}">${l}</span>`).join('<br>');
+}
+</script>
+</body>
+</html>
